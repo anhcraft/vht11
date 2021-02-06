@@ -1,0 +1,4 @@
+# Project exclude paths
+/node_modules/
+/src/main/dist/
+/src/renderer/dist/
