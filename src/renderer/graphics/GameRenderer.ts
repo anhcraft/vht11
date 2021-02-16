@@ -111,6 +111,7 @@ export class GameRenderer {
     private durabilityBar: PIXI.Sprite | null = null;
     private travelledDistance: PIXI.Text | null = null;
     private speed: PIXI.Text | null = null;
+    private scoreboard: PIXI.Container | null = null;
     private quizContainer: PIXI.Container | null = null;
     private quizProgressBar: PIXI.Sprite | null = null;
     private quizTimer: PIXI.Text | null = null;
@@ -429,6 +430,37 @@ export class GameRenderer {
             }
         };
         this.app.ticker.add(this.ticker.bind(this));
+    }
+
+    public updateScoreboard(lines: string[]){
+        if(this.scoreboard == null){
+            this.scoreboard = new PIXI.Container();
+            this.scoreboard.zIndex = 1;
+            this.app.stage.addChild(this.scoreboard);
+        } else {
+            this.removeChildren(this.scoreboard);
+        }
+
+        const overlay = new PIXI.Sprite(PIXI.Texture.WHITE);
+        overlay.width = this.screenWidth * 0.1;
+        overlay.height = this.screenHeight * 0.3;
+        overlay.tint = 0x000000;
+        overlay.alpha = 0.75;
+        overlay.anchor.set(1, 0.5);
+        overlay.position.set(this.screenWidth, this.screenHeight * 0.5);
+        this.scoreboard.addChild(overlay);
+
+        const x = overlay.position.x - overlay.width + 15;
+        let y = overlay.position.y - overlay.height * 0.5;
+        for(const line of lines){
+            const style = new PIXI.TextStyle({
+                fill: "white",
+                fontSize: 15
+            });
+            const text = new PIXI.Text(line, style);
+            text.position.set(x, y += 15);
+            this.scoreboard.addChild(text);
+        }
     }
 
     public updateTravelledDistance(value: number) {

@@ -28,10 +28,15 @@ function addClickEvent(elem: Element | null, callback: any){
     }
 }
 
-onOpenSection["multiplayer-join"] = function () {
+onOpenSection["multiplayer-menu"] = function () {
+    const nick = localStorage.getItem("last-nickname");
+    if(nick != null) {
+        (document.getElementById("nickname") as HTMLInputElement).value = nick;
+    }
     const log = document.getElementById("join-form-log");
     if(log != null) {
         log.innerHTML = "";
+        log.classList.add("hidden");
     }
 };
 
@@ -45,7 +50,7 @@ let client: Client | null = null;
 
 addClickEvent(document.getElementById("btn-offline-play"), function () {
     closeSection();
-    client = new Client(null, function () {
+    client = new Client(false, "", function () {
         client = null;
         openSection("main-menu");
     });
@@ -53,7 +58,40 @@ addClickEvent(document.getElementById("btn-offline-play"), function () {
 });
 
 addClickEvent(document.getElementById("join-submit"), function () {
-
+    const nick = document.getElementById("nickname") as HTMLInputElement;
+    const nickname = nick.value.trim();
+    if(nickname.length > 15 || nickname.length < 1) {
+        const log = document.getElementById("join-form-log");
+        if(log != null) {
+            log.innerHTML = "Biệt danh quá ngắn hoặc quá dài!";
+            log.classList.remove("hidden");
+        }
+        return;
+    }
+    client = new Client(true, nickname, function () {
+        if(client?.connection?.connectFailed) {
+            openSection("multiplayer-menu");
+            const log = document.getElementById("join-form-log");
+            if(log != null) {
+                log.innerHTML = "Đã có ai đó chọn biệt danh này!";
+                log.classList.remove("hidden");
+            }
+        } else {
+            openSection("main-menu");
+        }
+        client = null;
+    });
+    setTimeout(function () {
+        if(!client?.connection?.connectFailed) {
+            client?.start();
+        } else {
+            const log = document.getElementById("join-form-log");
+            if(log != null) {
+                log.innerHTML = "Kết nối máy chủ thất bại!";
+                log.classList.remove("hidden");
+            }
+        }
+    }, 3000)
 });
 
 openSection("main-menu");

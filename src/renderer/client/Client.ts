@@ -11,7 +11,7 @@ import {MatchingQuiz} from "../quiz/MatchingQuiz";
 import {Pair} from "../utils/Pair";
 import {Vector} from "../utils/Vector";
 import {MultiChoiceQuiz} from "../quiz/MultiChoiceQuiz";
-import {Connection} from "../network/Connection";
+import {Connection} from "./Connection";
 
 // Phương trình tính delta tốc độ từ thời gian trả lời trung bình
 const speedDeltaFunction = new LinearFunction(
@@ -29,7 +29,7 @@ const maxCarDurability = 100;
 const challengeMode = false;
 
 export class Client {
-    private readonly connection: Connection | null;
+    public readonly connection: Connection | null;
     private readonly endCallback: any;
     private readonly multiChoiceQuizPool: MultiChoiceQuizPool = new MultiChoiceQuizPool();
     private readonly countingQuizPool: CountingQuizPool = new CountingQuizPool();
@@ -42,8 +42,10 @@ export class Client {
     private travelledDistance = 0;              // Quãng đường di chuyển
     private avgAnswerTime = 0;                  // Thời gian trả lời trung bình
     private speedUpgradeCounter = 0;
+    private scoreboard: Map<string, number> = new Map<string, number>();
 
-    private task: NodeJS.Timeout | null = null;
+    private mainTask: NodeJS.Timeout | null = null;
+    private networkTask: NodeJS.Timeout | null = null;
     private activeQuiz : ActiveQuiz | null = null;
     private processingNewQuiz = false
     private processingAnswer = false;
@@ -53,8 +55,35 @@ export class Client {
     private matchedPoints: Map<Point, Pair<Vector, any>> = new Map<PIXI.Point, Pair<Vector, any>>();
     private selectedPoint: Point | null = null;
 
-    constructor(connection: Connection | null, endCallback: any) {
-        this.connection = connection;
+    constructor(multiplayer: boolean, nickname: string, endCallback: any) {
+        if(multiplayer) {
+            this.connection = new Connection(
+                function (this: Client, player: string, score: number) {
+                    if(score > 0) {
+                        this.scoreboard.set(player, score);
+                    } else {
+                        this.scoreboard.delete(player);
+                    }
+                    this.scoreboard.set(nickname, this.travelledDistance);
+                    const sortedMap = new Map([...this.scoreboard.entries()].sort((a, b) => b[1] - a[1]));
+                    const lines = [];
+                    let i = 0;
+                    for (const [key, value] of sortedMap) {
+                        lines.push((i + 1) + ". " + key + ": " + Math.floor(value));
+                        if(++i == 10) {
+                            break;
+                        }
+                    }
+                    this.gameRenderer.updateScoreboard(lines);
+                }.bind(this),
+                function (this: Client) {
+                    this.end();
+                }.bind(this),
+                nickname
+            );
+        } else {
+            this.connection = null;
+        }
         this.endCallback = endCallback;
         this.quizTypes = [
             // CÂU HỎI TRẮC NGHIỆM
@@ -154,7 +183,7 @@ export class Client {
                     } else {
                         const removeFunc = this.gameRenderer.renderGraphVector(this.selectedPoint, graphPos);
                         const pair = new Pair<Vector, any>(new Vector(this.selectedPoint, graphPos), removeFunc);
-                        this. matchedPoints.set(this.selectedPoint, pair);
+                        this.matchedPoints.set(this.selectedPoint, pair);
                         this.matchedPoints.set(graphPos, pair);
                         this.selectedPoint = null;
                         const quiz = this.activeQuiz?.quiz as MatchingQuiz;
@@ -281,7 +310,7 @@ export class Client {
         this.gameRenderer.updateSpeed(this.carSpeed);
 
         const interval = 100;
-        this.task = setInterval(function (this: Client) {
+        this.mainTask = setInterval(function (this: Client) {
             if(this.lostGame) {
                 if(!this.processingEndGame) {
                     this.processingEndGame = true;
@@ -346,11 +375,25 @@ export class Client {
                 }
             }
         }.bind(this), interval);
+
+        if(this.connection != null && !this.connection.closed) {
+            this.networkTask = setInterval(function(this: Client) {
+                this.connection?.socket.send(JSON.stringify({
+                    score: this.travelledDistance
+                }));
+            }.bind(this), 3000);
+        }
     }
 
     public end() {
-        if(this.task != null) {
-            clearInterval(this.task);
+        if(this.mainTask != null) {
+            clearInterval(this.mainTask);
+        }
+        if(this.networkTask != null) {
+            clearInterval(this.networkTask);
+        }
+        if(this.connection != null && !this.connection.closed){
+            this.connection.socket.close();
         }
         this.gameRenderer.destroy();
         this.endCallback.call();
