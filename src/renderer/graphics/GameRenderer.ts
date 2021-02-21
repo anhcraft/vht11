@@ -280,8 +280,8 @@ export class GameRenderer {
         squarePlane.sortableChildren = true;
 
         const treeA = new PIXI.projection.Sprite2d(PIXI.Texture.from(TreeImg));
-        treeA.width = 300 * this.viewportScaleX;
-        treeA.height = 450 * this.viewportScaleY;
+        treeA.width = 308 * this.viewportScaleX;
+        treeA.height = 392 * this.viewportScaleY;
         treeA.anchor.set(0.5, 0.5);
         this.resetTreePosition(treeA);
 
