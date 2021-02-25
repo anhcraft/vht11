@@ -69,15 +69,13 @@ addClickEvent(document.getElementById("join-submit"), function () {
         return;
     }
     client = new Client(true, nickname, function () {
+        openSection("multiplayer-menu");
         if(client?.connection?.connectFailed) {
-            openSection("multiplayer-menu");
             const log = document.getElementById("join-form-log");
             if(log != null) {
                 log.innerHTML = "Đã có ai đó chọn biệt danh này!";
                 log.classList.remove("hidden");
             }
-        } else {
-            openSection("main-menu");
         }
         client = null;
     });
