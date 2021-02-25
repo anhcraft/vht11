@@ -1,5 +1,6 @@
 export class Connection {
     private readonly _socket: WebSocket;
+    private readonly _username: string;
     private _closed: boolean = false;
     private _connectFailed: boolean = false;
     private onScoreUpdate: any;
@@ -17,14 +18,19 @@ export class Connection {
         return this._connectFailed;
     }
 
-    constructor(onScoreUpdate: any, onConnectionClose: any, nick: string) {
+    get username(): string {
+        return this._username;
+    }
+
+    constructor(onScoreUpdate: any, onConnectionClose: any, username: string) {
         this.onScoreUpdate = onScoreUpdate;
         this.onConnectionClose = onConnectionClose;
+        this._username = username;
 
         this._socket = new WebSocket('ws://vht11.tk:8080');
         this._socket.addEventListener('open', function (this: Connection) {
             this._socket.send(JSON.stringify({
-                nickname: nick
+                nickname: username
             }));
         }.bind(this));
         this._socket.addEventListener('message', function (event) {

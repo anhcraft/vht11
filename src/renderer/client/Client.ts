@@ -64,17 +64,6 @@ export class Client {
                     } else {
                         this.scoreboard.delete(player);
                     }
-                    this.scoreboard.set(nickname, this.travelledDistance);
-                    const sortedMap = new Map([...this.scoreboard.entries()].sort((a, b) => b[1] - a[1]));
-                    const lines = [];
-                    let i = 0;
-                    for (const [key, value] of sortedMap) {
-                        lines.push((i + 1) + ". " + key + ": " + Math.floor(value));
-                        if(++i == 10) {
-                            break;
-                        }
-                    }
-                    this.gameRenderer.updateScoreboard(lines);
                 }.bind(this),
                 function (this: Client) {
                     this.end();
@@ -324,6 +313,29 @@ export class Client {
                 // convert m/s to m/tick
                 this.travelledDistance += this.carSpeed / 1000 * interval;
                 this.gameRenderer.updateTravelledDistance(this.travelledDistance);
+
+                // cap nhat scoreboard
+                if(this.connection != null) {
+                    this.scoreboard.set(this.connection.username, this.travelledDistance);
+                    const sortedMap = new Map([...this.scoreboard.entries()].sort((a, b) => b[1] - a[1]));
+                    const lines = [];
+                    let i = 0;
+                    for (const [key, value] of sortedMap) {
+                        lines.push((i + 1) + ". " + key + ": " + Math.floor(value));
+                        if (++i == 15) {
+                            break;
+                        }
+                    }
+                    while (true) {
+                        if (i++ == 15) {
+                            break;
+                        }
+                        lines.push("");
+                    }
+                    lines.push("");
+                    lines.push("Online: " + (sortedMap.size));
+                    this.gameRenderer.updateScoreboard(lines);
+                }
             }
 
             if(this.gameRenderer.paused && !this.gameRenderer.carState) {

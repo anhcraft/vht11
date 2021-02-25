@@ -495,7 +495,7 @@ export class GameRenderer {
 
         const overlay = new PIXI.Sprite(PIXI.Texture.WHITE);
         overlay.width = this.screenWidth * 0.1;
-        overlay.height = this.screenHeight * 0.3;
+        overlay.height = this.screenHeight * 0.31;
         overlay.tint = 0x000000;
         overlay.alpha = 0.75;
         overlay.anchor.set(1, 0.5);
