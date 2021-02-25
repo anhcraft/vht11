@@ -70,7 +70,7 @@ export class GameRenderer {
 
     private static readonly autoChooseQuiz: boolean = false;
     private static readonly quizDebug: boolean = false;
-    private static readonly noCollision: boolean = true;
+    private static readonly noCollision: boolean = false;
 
     private static readonly car2SceneSpeedFunction = new LinearFunction(
         new Point(25, 6),
@@ -818,7 +818,7 @@ export class GameRenderer {
                 // pre-render choices
                 const renderChoices = function (this: GameRenderer, i: number) {
                     const choice = quiz.choices[i];
-                    HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(choice), function (this: GameRenderer, txt: PIXI.Texture) {
+                    HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(choice), centerAlignedX - leftAlignedX, function (this: GameRenderer, txt: PIXI.Texture) {
                         const sprite = new PIXI.Sprite(txt);
                         sprite.anchor.set(0, 0);
                         sprite.interactive = true;
@@ -843,7 +843,7 @@ export class GameRenderer {
             }.bind(this);
 
             // render question
-            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), function (this: GameRenderer, txt: PIXI.Texture) {
+            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), this.screenWidth * GameRenderer.quizContainerWidth - leftAlignedX * 2, function (this: GameRenderer, txt: PIXI.Texture) {
                 const question = new PIXI.Sprite(txt);
                 question.anchor.set(0, 0);
                 question.position.set(leftAlignedX, topPadding);
@@ -927,7 +927,7 @@ export class GameRenderer {
             }.bind(this);
 
             // render question
-            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), function (this: GameRenderer, txt: PIXI.Texture) {
+            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), this.screenWidth * GameRenderer.quizContainerWidth - leftAlignedX * 2, function (this: GameRenderer, txt: PIXI.Texture) {
                 const question = new PIXI.Sprite(txt);
                 question.anchor.set(0, 0);
                 question.position.set(leftAlignedX, topPadding);
