@@ -254,6 +254,17 @@ export class Client {
         }.bind(this);
     }
 
+    private animateDurabilityBar(current: number, target: number){
+        setTimeout(function (this: Client) {
+            this.gameRenderer.updateDurabilityBar(current / maxCarDurability);
+            if(current < target) {
+                this.animateDurabilityBar(current + 1, target);
+            } else if(current > target) {
+                this.animateDurabilityBar(current - 1, target);
+            }
+        }.bind(this), 100);
+    }
+
     private onAnswered(rating: number, startTime: number | undefined){
         if(this.activeQuiz == null) return;
         if(startTime != undefined){
@@ -269,13 +280,15 @@ export class Client {
                 this.speedUpgradeCounter = 0;
                 this.carSpeed += speedDeltaFunction.eval(this.avgAnswerTime, 'Y_LOWER');
                 this.gameRenderer.updateSpeed(this.carSpeed);
+                this.animateDurabilityBar(this.carDurability, maxCarDurability);
                 this.carDurability = maxCarDurability;
             }
         } else {
+            const lastDurability = this.carDurability;
             this.carDurability -= this.activeQuiz.penalty;
             this.carDurability = Math.max(0, this.carDurability);
+            this.animateDurabilityBar(lastDurability, this.carDurability);
         }
-        this.gameRenderer.updateDurabilityBar(this.carDurability / maxCarDurability);
         setTimeout(function(this: Client) {
             this.gameRenderer.closeQuiz();
             this.activeQuiz = null;
