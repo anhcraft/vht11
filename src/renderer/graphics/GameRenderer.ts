@@ -11,19 +11,28 @@ import {TextInput} from "../extensions/PIXI.TextInput";
 import {CardQuiz} from "../quiz/CardQuiz";
 import {Scrollbox} from "pixi-scrollbox";
 import {LinearFunction} from "../utils/LinearFunction";
-import {Point} from "pixi.js";
+import {Point, Texture} from "pixi.js";
 import {MatchingQuiz} from "../quiz/MatchingQuiz";
 import {Utils} from "../utils/Utils";
+import {makeNoise2D} from "open-simplex-noise";
 
+// @ts-ignore
 import CarImg from "../assets/car.png";
+// @ts-ignore
 import TreeImg from "../assets/tree.png";
+// @ts-ignore
 import TopBarImg from "../assets/topbar.png";
+// @ts-ignore
 import RoadImg from "../assets/road.png";
-import GreenswardImg from "../assets/greensward.jpg";
+// @ts-ignore
 import CatImg from "../assets/cat.png";
+// @ts-ignore
 import BirdImg from "../assets/bird.png";
+// @ts-ignore
 import ChickenImg from "../assets/chicken.png";
+// @ts-ignore
 import HoleImg from "../assets/holes.png";
+// @ts-ignore
 import StoneImg from "../assets/stone.png";
 
 export class GameRenderer {
@@ -40,6 +49,8 @@ export class GameRenderer {
 
     // Danh sách ảnh các vật cản
     private static readonly obstacleImages: string[] = [CatImg, BirdImg, ChickenImg, HoleImg, StoneImg];
+
+    private static readonly greenswardScale : number = 0.2;
 
     private static readonly topBarWidth : number = 1160;
     private static readonly topBarHeight : number = 120;
@@ -59,12 +70,16 @@ export class GameRenderer {
 
     private static readonly autoChooseQuiz: boolean = false;
     private static readonly quizDebug: boolean = false;
-    private static readonly noCollision: boolean = false;
+    private static readonly noCollision: boolean = true;
 
     private static readonly car2SceneSpeedFunction = new LinearFunction(
         new Point(25, 6),
         new Point(300, 30)
     );
+
+    // perlin noise
+    private static readonly noiseGenerator = makeNoise2D(Date.now());
+    private static readonly noiseGenerator2 = makeNoise2D(Date.now() >> 1);
 
     // Chỉnh vị trí tương đối của 1 vật so với vật chứa nó
     // - container: độ dài vật chứa
@@ -79,7 +94,37 @@ export class GameRenderer {
         // A(Sw/3, 2Sh) và B(0, 0)
         // => y = 6*(Sh/Sw)*x
         // => x = (Sw/Sh)*y/6
+        // TODO su dung LinearFunction
         return GameRenderer.screenRatio * -treeY / 6;
+    }
+
+    private static setPixelColor(imageData: ImageData, x: number, y: number, r: number, g: number, b: number, a: number) {
+        const index = (x + y * imageData.width) * 4;
+        imageData.data[index] = r;
+        imageData.data[index+1] = g;
+        imageData.data[index+2] = b;
+        imageData.data[index+3] = a;
+    }
+
+    private static generateGreenswardTexture(width: number, height: number, pos: number): PIXI.Texture {
+        const imageData = new ImageData(width, height);
+        const grassAnimationFunction = new LinearFunction(
+            new PIXI.Point(width / 3, height),
+            new PIXI.Point(width / 6, 0)
+        );
+        for (let x = 0; x < width; x++) {
+            for (let y = 0; y < height; y++) {
+                const xDelta = grassAnimationFunction.evalInversion(y) * (x <= (width * 0.5) ? 1 : -1);
+                const v = (GameRenderer.noiseGenerator((x + xDelta) * 0.05, (y + pos) * 0.05) + 1) * 0.5;
+                const v_ = (GameRenderer.noiseGenerator2((x + xDelta) * 0.05, (y + pos) * 0.05) + 1) * 0.5;
+                if (v < 0.3) {
+                    GameRenderer.setPixelColor(imageData, x, y, 87, 46, 10, 255);
+                } else {
+                    GameRenderer.setPixelColor(imageData, x, y, 42, 120 + (140 - 120) * v_, 20, 255);
+                }
+            }
+        }
+        return Texture.fromBuffer(new Uint8Array(imageData.data.buffer), width, height);
     }
 
     // Tỉ lệ kích thước theo X/Y
@@ -99,6 +144,7 @@ export class GameRenderer {
     private _carState: boolean = false;              // Trạng thái xe (T: đang chạy, F: dừng)
     private shouldUpdateCarSide : boolean = false;   // Yêu cầu cập nhật vị trí xe
     private _inQuiz: boolean = false;                // Đang trong quá trình làm bài
+    private position: number = 0;                    // Vị trí của xe hiện tại trong thế giới game
 
     private readonly _app : PIXI.Application;
     private ticker : any;
@@ -108,6 +154,7 @@ export class GameRenderer {
         undefined, undefined, undefined
     ];
     private acceleration: number = 1;
+    private background: PIXI.Sprite | null = null;
     private durabilityBar: PIXI.Sprite | null = null;
     private travelledDistance: PIXI.Text | null = null;
     private speed: PIXI.Text | null = null;
@@ -136,7 +183,7 @@ export class GameRenderer {
         this.events = events;
         document.body.appendChild(this._app.view);
         this._app.view.style.position = "absolute";
-        this._app.view.style.zIndex = "999999";
+        this._app.view.style.zIndex = "999";
         this._app.view.style.top = ((window.innerHeight - this._app.view.height) * 0.5)+"px";
         this._app.view.style.left = "0px";
     }
@@ -199,7 +246,7 @@ export class GameRenderer {
     private resetObstaclePosition(obstacle: PIXI.projection.Sprite2d, group: number){
         let y = -this.screenHeight/2;
         // Hệ số được tạo ngẫu nhiên -> để các vật cản xuất hiện không đồng thời
-        y *= Math.max(2, Math.random() * 6) * (group + 1);
+        y *= Math.max(2, Math.random() * 6) * (group + 1) + group * 2;
         obstacle.position.set(this.screenWidth / 2, y);
     }
 
@@ -223,6 +270,7 @@ export class GameRenderer {
         // Phương trình đường thẳng giữa hai điểm:
         // A(Sw/2, 2Sh) và B(ratio * Sw, 0)
         // => Sh*x - ratio*Sw*Sh + (ratio - 0.5)*(Sw/Sh)*y/2 = 0
+        // TODO su dung LinearFunction
         return ratio * this.screenWidth - (ratio - 0.5) * GameRenderer.screenRatio * -obstacleY / 2;
     }
 
@@ -256,9 +304,9 @@ export class GameRenderer {
             this.carState = true;
         }
 
-        const background = new PIXI.projection.Sprite2d(PIXI.Texture.from(GreenswardImg));
-        background.width = this.screenWidth;
-        background.height = this.screenHeight;
+        this.background = new PIXI.projection.Sprite2d(GameRenderer.generateGreenswardTexture(1, 1, this.position));
+        this.background.width = this.screenWidth;
+        this.background.height = this.screenHeight;
 
         const focus = new PIXI.Sprite();
         focus.tint = 0xff0000;
@@ -330,7 +378,7 @@ export class GameRenderer {
         this.speed.anchor.set(1, 0);
         this.speed.position.set(this.travelledDistance.position.x, 55 * this.viewportScaleY);
 
-        this.app.stage.addChild(background);
+        this.app.stage.addChild(this.background);
         this.app.stage.addChild(container);
         this.app.stage.addChild(focus);
         this.app.stage.addChild(topBar);
@@ -373,7 +421,11 @@ export class GameRenderer {
                 this.carState = false;
             }
 
-            // chọn cây làm hình mẫu khi tính gia tốc
+            if(this.background != null) {
+                const pos = (this.position -= this.acceleration * GameRenderer.greenswardScale * 0.8);
+                this.background.texture = GameRenderer.generateGreenswardTexture(this.screenWidth * GameRenderer.greenswardScale, this.screenHeight * GameRenderer.greenswardScale, pos);
+            }
+
             const modelHeight = (treeA.height + treeB.height) / 2;
 
             const treeAy = treeA.position.y + this.accelerationOf(modelHeight, treeA.height);
@@ -400,7 +452,7 @@ export class GameRenderer {
                         osc.width = 100 * this.viewportScaleX;
                         osc.height = 100 * this.viewportScaleY;
                         osc.anchor.set(0.5, 0.5);
-                        this.resetObstaclePosition(osc, Math.floor(i / 3));
+                        this.resetObstaclePosition(osc, i % 3);
                         squarePlane.addChild(osc);
                         this.obstacles[i] = osc;
                     }

@@ -15,7 +15,7 @@ export class LinearFunction extends Vector {
         if(restrictions.includes('X_LOWER')) {
             x = Math.max(x, Math.min(this.begin.x, this.end.x));
         }
-        // lap phuong trinh duong thang
+        // lap phuong trinh duong thang f(x) = y
         let y = (this.end.y - this.begin.y) * (x - this.begin.x) / (this.end.x - this.begin.x) + this.begin.y;
         if(restrictions.includes('Y_UPPER')) {
             y = Math.min(y, Math.max(this.begin.y, this.end.y));
@@ -24,5 +24,23 @@ export class LinearFunction extends Vector {
             y = Math.max(y, Math.min(this.begin.y, this.end.y));
         }
         return y;
+    }
+
+    public evalInversion(y: number, ...restrictions: Restriction[]): number {
+        if(restrictions.includes('Y_UPPER')) {
+            y = Math.min(y, Math.max(this.begin.x, this.end.x));
+        }
+        if(restrictions.includes('Y_LOWER')) {
+            y = Math.max(y, Math.min(this.begin.x, this.end.x));
+        }
+        // lap phuong trinh duong thang dao nguoc f(y) = x
+        let x = (this.end.x - this.begin.x) * (y - this.begin.y) / (this.end.y - this.begin.y) + this.begin.x;
+        if(restrictions.includes('X_UPPER')) {
+            x = Math.min(x, Math.max(this.begin.y, this.end.y));
+        }
+        if(restrictions.includes('X_LOWER')) {
+            x = Math.max(x, Math.min(this.begin.y, this.end.y));
+        }
+        return x;
     }
 }
