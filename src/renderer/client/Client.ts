@@ -12,6 +12,7 @@ import {Pair} from "../utils/Pair";
 import {Vector} from "../utils/Vector";
 import {MultiChoiceQuiz} from "../quiz/MultiChoiceQuiz";
 import {Connection} from "./Connection";
+import {CountingQuiz} from "../quiz/CountingQuiz";
 
 // Phương trình tính delta tốc độ từ thời gian trả lời trung bình
 const speedDeltaFunction = new LinearFunction(
@@ -93,7 +94,12 @@ export class Client {
                 minPenalty: 30,
                 maxPenalty: 40,
                 getQuiz: function(this: Client) : any {
-                    return this.countingQuizPool.nextQuiz();
+                    let quiz: CountingQuiz | undefined;
+                    while (true) {
+                        quiz = this.countingQuizPool.nextQuiz();
+                        if(quiz == undefined || !isNaN(parseFloat(quiz.answer.trim()))) break;
+                    }
+                    return quiz;
                 },
                 renderQuiz: function (this: Client, quiz: any) {
                     this.gameRenderer.openCountingQuiz(quiz);
