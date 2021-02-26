@@ -382,22 +382,22 @@ export class Client {
                     if(this.processingNewQuiz) return;
                     this.processingNewQuiz = true;
                     setTimeout(function (this: Client) {
-                        const rand = Utils.randomRange(0, 5);
+                        const rand = Utils.randomRange(0, 7);
                         let type = 0;
                         switch (rand) {
-                            case 0: case 1: {
+                            case 0: case 1: case 2: case 3: {
                                 type = 0;
                                 break;
                             }
-                            case 2: case 3: {
+                            case 4: case 5: {
                                 type = 1;
                                 break;
                             }
-                            case 4: {
+                            case 6: {
                                 type = 2;
                                 break;
                             }
-                            case 5: {
+                            case 7: {
                                 type = 3;
                                 break;
                             }
