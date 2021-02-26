@@ -7,6 +7,8 @@ export class HTMLRenderer {
     private static createDummyCanvas(code: string, maxWidth: number, callback: any) {
         const dummy = document.createElement("div");
         dummy.style.width = maxWidth + "px";
+        dummy.style.fontFamily = "Arial";
+        dummy.style.fontSize = "16px";
         dummy.innerHTML = code;
         let container = document.getElementById("dummy-canvas-container");
         if(container == null) {
