@@ -137,6 +137,7 @@ export class GameRenderer {
     // Các biến khác
     private _paused : boolean = false;               // Tạm dừng game
     private _carSide: number = 1;                    // Vị trí làn chứa xe
+    private newCarSide: number = 1;                 // .................. (moi)
     private _carState: boolean = false;              // Trạng thái xe (T: đang chạy, F: dừng)
     private shouldUpdateCarSide : boolean = false;   // Yêu cầu cập nhật vị trí xe
     private _inQuiz: boolean = false;                // Đang trong quá trình làm bài
@@ -191,7 +192,7 @@ export class GameRenderer {
 
     set carSide(value: number) {
         if(this._carSide != value){
-            this._carSide = value;
+            this.newCarSide = value;
             this.shouldUpdateCarSide = true;
         }
     }
@@ -255,20 +256,53 @@ export class GameRenderer {
         obstacle.position.set(this.screenWidth / 2, y);
     }
 
-    private resetCarPosition(car: PIXI.projection.Sprite2d, side: number){
-        const anchorX = this.screenWidth / car.width;
-        // Hạ xe xuống dưới khung hình (chỉ để lộ một phần thân xe)
-        const anchorY = -(this.screenHeight / car.height) * 0.25;
-        if(side == 0) {
-            car.anchor.set(-anchorX * 0.18, anchorY);
-            car.skew.set(-this.laneAlpha, 0);
-        } else if(side == 1) {
-            car.anchor.set(-anchorX * 0.4, anchorY);
-            car.skew.set(0, 0);
-        } else if(side == 2) {
-            car.anchor.set(-anchorX * 0.65, anchorY);
-            car.skew.set(this.laneAlpha, 0);
-        }
+
+    // A - B - C
+    // type = 0: A -> B
+    // type = 1: B -> A
+    // type = 2: B -> C
+    // type = 3: C -> B
+    private animateCar(car: PIXI.projection.Sprite2d, progress: number, type: number) {
+        const anchor1 = 0.18;
+        const anchor2 = 0.4;
+        const anchor3 = 0.65;
+        progress = Math.min(100, progress);
+        setTimeout(function(this: GameRenderer){
+            let anchorXRatio = 0;
+            let skewX = 0;
+            if(type == 0) {
+                anchorXRatio = anchor1 + (anchor2 - anchor1) / 100 * progress;
+                skewX = -this.laneAlpha / 100 * (100 - progress);
+            } else if(type == 1) {
+                anchorXRatio = anchor2 - (anchor2 - anchor1) / 100 * progress;
+                skewX = -this.laneAlpha / 100 * progress;
+            } else if (type == 2) {
+                anchorXRatio = anchor2 + (anchor3 - anchor2) / 100 * progress;
+                skewX = this.laneAlpha / 100 * progress;
+            } else if(type == 3) {
+                anchorXRatio = anchor3 - (anchor3 - anchor2) / 100 * progress;
+                skewX = this.laneAlpha / 100 * (100 - progress);
+            }
+
+            const anchorX = this.screenWidth / car.width;
+            // Hạ xe xuống dưới khung hình (chỉ để lộ một phần thân xe)
+            const anchorY = -(this.screenHeight / car.height) * 0.25;
+            car.anchor.set(-anchorX * anchorXRatio, anchorY);
+            car.skew.set(skewX, 0);
+            if(progress < 100) {
+                this.animateCar(car, progress + 5, type);
+            }
+        }.bind(this), 10);
+    }
+
+    private resetCarPosition(car: PIXI.projection.Sprite2d, fromSide: number, toSide: number) {
+        if(fromSide == 0 && toSide == 1) this.animateCar(car, 0, 0);
+        else if(fromSide == 1 && toSide == 0) this.animateCar(car, 0, 1);
+        else if(fromSide == 1 && toSide == 2) this.animateCar(car, 0, 2);
+        else if(fromSide == 2 && toSide == 1) this.animateCar(car, 0, 3);
+        else if(toSide == 0) this.animateCar(car, 100, 1);
+        else if(toSide == 1) this.animateCar(car, 100, 0);
+        else if(toSide == 2) this.animateCar(car, 100, 2);
     }
 
     private getObstacleXFromY(obstacleY: number, ratio: number) : number {
@@ -348,7 +382,7 @@ export class GameRenderer {
         car.width = 327;
         car.height = 537;
         car.zIndex = 99;
-        this.resetCarPosition(car, this.carSide);
+        this.resetCarPosition(car, this.carSide, this.newCarSide);
 
         const topBar = new PIXI.projection.Sprite2d(PIXI.Texture.from(TopBarImg));
         topBar.width = GameRenderer.topBarWidth * this.viewportScaleX * GameRenderer.topBarScale;
@@ -383,7 +417,7 @@ export class GameRenderer {
         this.speed.anchor.set(1, 0);
         this.speed.position.set(this.travelledDistance.position.x, 55 * this.viewportScaleY);
 
-        this.app.stage.addChild(this.background);
+      //  this.app.stage.addChild(this.background);
         this.app.stage.addChild(container);
         this.app.stage.addChild(focus);
         this.app.stage.addChild(topBar);
@@ -413,7 +447,8 @@ export class GameRenderer {
 
             if(this.shouldUpdateCarSide) {
                 car.scale.set(this.viewportScaleX, this.viewportScaleY);
-                this.resetCarPosition(car, this.carSide);
+                this.resetCarPosition(car, this.carSide, this.newCarSide);
+                this._carSide = this.newCarSide;
                 if(car.width != this.viewportScaleX && car.height != this.viewportScaleY) {
                     this.shouldUpdateCarSide = false;
                 }
