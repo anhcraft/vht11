@@ -97,7 +97,7 @@ export class Client {
                     let quiz: CountingQuiz | undefined;
                     while (true) {
                         quiz = this.countingQuizPool.nextQuiz();
-                        if(quiz == undefined || !isNaN(parseFloat(quiz.answer.trim()))) break;
+                        if(quiz == undefined || !isNaN(parseFloat(quiz.answer.trim().replace(",",".")))) break;
                     }
                     return quiz;
                 },
@@ -140,7 +140,7 @@ export class Client {
         renderEvents.onSubmitCount = function (this: Client, answer: string) {
             if(this.processingAnswer) return;
             this.processingAnswer = true;
-            this.onAnswered(this.activeQuiz?.quiz.answer == parseFloat(answer.trim()) ? 0 : 1, this.activeQuiz?.startTime);
+            this.onAnswered(this.activeQuiz?.quiz.answer.replace(",",".") == answer.trim().replace(",",".") ? 0 : 1, this.activeQuiz?.startTime);
         }.bind(this);
         renderEvents.onPickCard = function (this: Client, containerId: number, card: number) {
             if(this.processingAnswer) return;
