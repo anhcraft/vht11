@@ -376,8 +376,26 @@ export class Client {
                     if(this.processingNewQuiz) return;
                     this.processingNewQuiz = true;
                     setTimeout(function (this: Client) {
-                        const type = Utils.randomRange(0, this.quizTypes.length - 1);
-                        // const type = 9+9+9+9+9+9+9+9+9+9+9 == 0 ? 2 : 3;
+                        const rand = Utils.randomRange(0, 5);
+                        let type = 0;
+                        switch (rand) {
+                            case 0: case 1: {
+                                type = 0;
+                                break;
+                            }
+                            case 2: case 3: {
+                                type = 1;
+                                break;
+                            }
+                            case 4: {
+                                type = 2;
+                                break;
+                            }
+                            case 5: {
+                                type = 3;
+                                break;
+                            }
+                        }
                         const quizType = this.quizTypes[type];
                         this.activeQuiz = new ActiveQuiz(
                             quizType.getQuiz.call(this),
