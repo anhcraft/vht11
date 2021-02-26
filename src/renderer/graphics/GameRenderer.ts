@@ -482,7 +482,7 @@ export class GameRenderer {
             for (let i = 0; i < this.obstacles.length; i++) {
                 let osc = this.obstacles[i];
                 if (osc === undefined) {
-                    if (Math.random() <= 0.1 && Math.random() <= 0.05) {
+                    if (Math.random() <= 0.1) {
                         osc = new PIXI.projection.Sprite2d(PIXI.Texture.from(
                             GameRenderer.obstacleImages[~~(Math.random() * GameRenderer.obstacleImages.length)]
                         ));
