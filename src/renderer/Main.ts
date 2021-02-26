@@ -60,10 +60,10 @@ addClickEvent(document.getElementById("btn-offline-play"), function () {
 addClickEvent(document.getElementById("join-submit"), function () {
     const nick = document.getElementById("nickname") as HTMLInputElement;
     const nickname = nick.value.trim();
-    if(nickname.length > 15 || nickname.length < 1) {
+    if(nickname.length > 10 || nickname.length < 1) {
         const log = document.getElementById("join-form-log");
         if(log != null) {
-            log.innerHTML = "Biệt danh quá ngắn hoặc quá dài!";
+            log.innerHTML = "Biệt danh quá ngắn hoặc quá dài! (Biệt danh phải từ 1-10 kí tự)";
             log.classList.remove("hidden");
         }
         return;
