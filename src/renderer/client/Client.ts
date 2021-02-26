@@ -250,6 +250,8 @@ export class Client {
                     this.processingAnswer = true;
                     this.onAnswered(0, this.activeQuiz?.startTime);
                 }
+            } else if (e.key == "c") {
+                this.gameRenderer.noCollision = !this.gameRenderer.noCollision;
             }
         }.bind(this);
     }

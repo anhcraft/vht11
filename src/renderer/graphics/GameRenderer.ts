@@ -68,10 +68,6 @@ export class GameRenderer {
     private static readonly quizCardHeight = GameRenderer.quizContainerHeight * 0.3;
     private static readonly quizCardPaddingX = GameRenderer.quizContainerWidth * 0.01;
 
-    private static readonly autoChooseQuiz: boolean = false;
-    private static readonly quizDebug: boolean = false;
-    private static readonly noCollision: boolean = false;
-
     private static readonly car2SceneSpeedFunction = new LinearFunction(
         new Point(25, 6),
         new Point(300, 30)
@@ -145,6 +141,7 @@ export class GameRenderer {
     private shouldUpdateCarSide : boolean = false;   // Yêu cầu cập nhật vị trí xe
     private _inQuiz: boolean = false;                // Đang trong quá trình làm bài
     private position: number = 0;                    // Vị trí của xe hiện tại trong thế giới game
+    private _noCollision: boolean = false;
 
     private readonly _app : PIXI.Application;
     private ticker : any;
@@ -225,6 +222,14 @@ export class GameRenderer {
 
     set inQuiz(value: boolean) {
         this._inQuiz = value;
+    }
+
+    get noCollision(): boolean {
+        return this._noCollision;
+    }
+
+    set noCollision(value: boolean) {
+        this._noCollision = value;
     }
 
     // Tìm gia tốc tương đối giữa vật và hình mẫu
@@ -416,9 +421,6 @@ export class GameRenderer {
 
             if(this.paused) {
                 return;
-            } else if(GameRenderer.quizDebug) {
-                this.paused = true;
-                this.carState = false;
             }
 
             if(this.background != null) {
@@ -458,7 +460,7 @@ export class GameRenderer {
                     }
                 } else {
                     const oscY = osc.position.y + this.accelerationOf(modelHeight, osc.height);
-                    if(oscY >= this.screenHeight * 0.1 && oscY <= this.screenHeight * 0.5 && this.carSide == (i % 3) && !GameRenderer.noCollision) {
+                    if(oscY >= this.screenHeight * 0.1 && oscY <= this.screenHeight * 0.5 && this.carSide == (i % 3) && !this._noCollision) {
                         squarePlane.removeChild(osc);
                         this.obstacles[i] = undefined;
                         this.paused = true;
@@ -808,10 +810,6 @@ export class GameRenderer {
                             setTimeout(updateChoicePosition, 500);
                             return;
                         }
-                    }
-
-                    if(GameRenderer.autoChooseQuiz) {
-                        (this.events.onPickChoice.bind(this))(quiz.answer);
                     }
                 }.bind(this);
 
