@@ -35,6 +35,36 @@ import HoleImg from "../assets/holes.png";
 // @ts-ignore
 import StoneImg from "../assets/stone.png";
 
+class GraphScale {
+    get step(): number {
+        return this._step;
+    }
+
+    set step(value: number) {
+        this._step = value;
+    }
+
+    get min(): number {
+        return this._min;
+    }
+
+    set min(value: number) {
+        this._min = value;
+    }
+
+    get max(): number {
+        return this._max;
+    }
+
+    set max(value: number) {
+        this._max = value;
+    }
+
+    private _step: number = 1;
+    private _min: number = 0;
+    private _max: number = 0;
+}
+
 export class GameRenderer {
     // Kích thước màn hình tiêu chuẩn (màn hình sử dụng trong quá trình phát triển game)
     private static readonly standardScreenWidth : number = 1866;
@@ -165,8 +195,8 @@ export class GameRenderer {
     private quizChosenCardContainer: Scrollbox | null = null;
     private quizAvailableCardContainer: Scrollbox | null = null;
     private quizGraph: PIXI.Container | null = null;
-    private quizGraphScaleX: number = 1;
-    private quizGraphScaleY: number = 1;
+    private quizGraphScaleX: GraphScale = new GraphScale();
+    private quizGraphScaleY: GraphScale = new GraphScale();
 
     constructor(events: RenderEvents) {
         this._app = new PIXI.Application({
@@ -1076,9 +1106,9 @@ export class GameRenderer {
     // + Tìm vị trí lower và upper
     // + So sánh giá trị tuyệt đối của chúng và tìm ra max
     // - Khi đó scale = <độ dài khung đồ thị> / <max * 2>
-    private static getGraphScale(quiz: MatchingQuiz, graphLength: number, axisX: boolean): number {
-        let lower: number | undefined = undefined;
-        let upper: number | undefined = undefined;
+    private static getGraphScale(quiz: MatchingQuiz, graphLength: number, axisX: boolean): GraphScale {
+        let lower: number = 0;
+        let upper: number = 0;
         for(const v of quiz.answer){
             lower = Utils.safeMin(lower, axisX ? v.begin.x : v.begin.y);
             lower = Utils.safeMin(lower, axisX ? v.end.x : v.end.y);
@@ -1089,13 +1119,17 @@ export class GameRenderer {
             lower = Utils.safeMin(lower, axisX ? p.x : p.y);
             upper = Utils.safeMax(upper, axisX ? p.x : p.y);
         }
-        return upper === undefined || lower === undefined ? 1 : graphLength / (Math.max(Math.abs(upper), Math.abs(lower)) * 2);
+        const graphScale = new GraphScale();
+        graphScale.step = graphLength / (Math.max(Math.abs(upper), Math.abs(lower)) * 2);
+        graphScale.min = lower;
+        graphScale.max = upper;
+        return graphScale;
     }
 
-    private renderGraphPoint(p: Point) {8
+    private renderGraphPoint(p: Point) {
         const r = Math.min(this.viewportScaleX, this.viewportScaleY) * 8;
-        const x = this.screenWidth * 0.5 + p.x * this.quizGraphScaleX;
-        const y = this.screenHeight * 0.5 - p.y * this.quizGraphScaleY;
+        const x = this.screenWidth * 0.5 + p.x * this.quizGraphScaleX.step;
+        const y = this.screenHeight * 0.5 - p.y * this.quizGraphScaleY.step;
         const point = new PIXI.Graphics();
         point.zIndex = 1;
         this.quizGraph?.addChild(point);
@@ -1128,15 +1162,34 @@ export class GameRenderer {
 
     public renderGraphVector(selectedPoint: PIXI.Point, graphPos: PIXI.Point) : any {
         const r = Math.min(this.viewportScaleX, this.viewportScaleY) * 5;
-        const x1 = this.screenWidth * 0.5 + selectedPoint.x * this.quizGraphScaleX;
-        const y1 = this.screenHeight * 0.5 - selectedPoint.y * this.quizGraphScaleY;
-        const x2 = this.screenWidth * 0.5 + graphPos.x * this.quizGraphScaleX;
-        const y2 = this.screenHeight * 0.5 - graphPos.y * this.quizGraphScaleY;
+        const arrowLen = r * 2;
+        const x1 = this.screenWidth * 0.5 + selectedPoint.x * this.quizGraphScaleX.step;
+        const y1 = this.screenHeight * 0.5 - selectedPoint.y * this.quizGraphScaleY.step;
+        const x2 = this.screenWidth * 0.5 + graphPos.x * this.quizGraphScaleX.step;
+        const y2 = this.screenHeight * 0.5 - graphPos.y * this.quizGraphScaleY.step;
+        const angle = Math.atan2(-(y2 - y1), x2 - x1);
+        const wc = Math.sin(0.5 * Math.PI - angle) * 2 * arrowLen;
+        const hc = Math.cos(0.5 * Math.PI - angle) * 2 * arrowLen;
+        const cx1 = x2 - Math.sin(angle) * arrowLen;
+        const cy1 = y2 - Math.cos(angle) * arrowLen;
+        const cx2 = x2 + Math.sin(angle) * arrowLen;
+        const cy2 = y2 + Math.cos(angle) * arrowLen;
+        const cx3 = (cx1 + cx2) / 2 + wc;
+        const cy3 = (cy1 + cy2) / 2 - hc;
+
         const vect = new PIXI.Graphics();
         vect.lineStyle(r, 0xe04a4a, 1);
         vect.moveTo(x1, y1);
         vect.lineTo(x2, y2);
+        vect.moveTo(cx1, cy1);
+        vect.lineTo(cx2, cy2);
+        vect.moveTo(cx1, cy1);
+        vect.lineTo(cx3, cy3);
+        vect.moveTo(cx2, cy2);
+        vect.lineTo(cx3, cy3);
+        vect.zIndex = 2;
         this.quizGraph?.addChild(vect);
+
         return function (this: GameRenderer) {
             this.quizGraph?.removeChild(vect);
         }.bind(this);
@@ -1153,6 +1206,13 @@ export class GameRenderer {
 
             // lề trên cùng
             const topPadding = this.screenHeight * 0.2;
+
+            // le chu so vs truc
+            const textSpaceX = this.screenWidth * 0.03;
+            const textSpaceY = this.screenHeight * 0.03;
+
+            const r = Math.min(this.viewportScaleX, this.viewportScaleY) * 4;
+            const arrowLen = r * 3;
 
             const text0 = new PIXI.Text(`Hãy tìm các cặp A(x, y) và B(x, y) sao cho T(v, A) = B với v = (${quiz.direction.x}, ${quiz.direction.y})`, new PIXI.TextStyle({
                 fontSize: 18,
@@ -1173,11 +1233,26 @@ export class GameRenderer {
             const graphY2 = 1 - graphY1;
 
             const axis = new PIXI.Graphics();
-            axis.lineStyle(3, 0x636363, 1);
+            axis.lineStyle(r, 0x636363, 1);
+
+            // truc Y
             axis.moveTo(this.screenWidth * 0.5, this.screenHeight * graphY1);
             axis.lineTo(this.screenWidth * 0.5, this.screenHeight * graphY2);
+
+            // mui ten truc Y
+            axis.moveTo(this.screenWidth * 0.5 + Math.sin(Math.PI * 0.25) * arrowLen, this.screenHeight * graphY1 + Math.cos(Math.PI * 0.25) * arrowLen);
+            axis.lineTo(this.screenWidth * 0.5, this.screenHeight * graphY1);
+            axis.lineTo(this.screenWidth * 0.5 - Math.sin(Math.PI * 0.25) * arrowLen, this.screenHeight * graphY1 + Math.cos(Math.PI * 0.25) * arrowLen);
+
+            // truc X
             axis.moveTo(this.screenWidth * graphX1, this.screenHeight * 0.5);
             axis.lineTo(this.screenWidth * graphX2, this.screenHeight * 0.5);
+
+            // mui ten truc X
+            axis.moveTo(this.screenWidth * graphX2 - Math.cos(Math.PI * 0.25) * arrowLen, this.screenHeight * 0.5 - Math.sin(Math.PI * 0.25) * arrowLen);
+            axis.lineTo(this.screenWidth * graphX2, this.screenHeight * 0.5);
+            axis.lineTo(this.screenWidth * graphX2 - Math.cos(Math.PI * 0.25) * arrowLen, this.screenHeight * 0.5 + Math.sin(Math.PI * 0.25) * arrowLen);
+
             this.quizGraph.addChild(axis);
 
             this.quizGraphScaleX = GameRenderer.getGraphScale(quiz, this.screenWidth * (graphX2 - graphX1), true);
@@ -1190,7 +1265,27 @@ export class GameRenderer {
             for (const v of quiz.answer) {
                 this.renderGraphPoint(v.begin);
                 this.renderGraphPoint(v.end);
+            }/*
+            let textCountX = (Math.abs(this.quizGraphScaleX.min) + Math.abs(this.quizGraphScaleX.max)) / this.quizGraphScaleX.step;
+            for(let i = 0; i <= textCountX; i++){
+                const text = new PIXI.Text(`${Math.floor(this.quizGraphScaleX.min + i * this.quizGraphScaleX.step)}`, new PIXI.TextStyle({
+                    fontSize: 14,
+                    fontWeight: "bold"
+                }));
+                text.anchor.set(0.5, 0.5);
+                text.position.set(this.screenWidth * (graphX1 + (graphX2 - graphX1) / textCountX * i), this.screenHeight * 0.5 + textSpaceY);
+                this.quizGraph?.addChild(text);
             }
+            let textCountY = (Math.abs(this.quizGraphScaleY.min) + Math.abs(this.quizGraphScaleY.max)) / this.quizGraphScaleY.step;
+            for(let i = 0; i <= textCountY; i++){
+                const text = new PIXI.Text(`${Math.floor(this.quizGraphScaleY.max - i * this.quizGraphScaleY.step)}`, new PIXI.TextStyle({
+                    fontSize: 14,
+                    fontWeight: "bold"
+                }));
+                text.anchor.set(0.5, 0.5);
+                text.position.set(this.screenWidth * 0.5 + textSpaceX, this.screenHeight * (graphY1 + (graphY2 - graphY1) / textCountY * i));
+                this.quizGraph?.addChild(text);
+            }*/
         }
     }
 
