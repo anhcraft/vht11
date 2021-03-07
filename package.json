@@ -12,7 +12,7 @@
     "clean-renderer": "rm -rf src/renderer/dist/",
     "forge-start": "electron-forge start",
     "forge-package": "electron-forge package",
-    "build-webpack": "webpack-cli --config webpack.config.js",
+    "build-webpack": "env NODE_OPTIONS=--max_old_space_size=4096 webpack-cli --config webpack.config.js",
     "build": "npm-run-all clean-main clean-renderer build-webpack",
     "package": "npm-run-all build forge-package forge-start",
     "make": "electron-forge make"
