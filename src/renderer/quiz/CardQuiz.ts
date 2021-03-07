@@ -12,7 +12,8 @@ export class CardQuiz {
                 return this.createGeometricProgression();
             }
             default: {
-                return this.createBinomialTheorem();
+                return this.createArithmeticProgression();
+                //return this.createBinomialTheorem();
             }
         }
     }

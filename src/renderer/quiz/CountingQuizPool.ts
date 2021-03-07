@@ -17,7 +17,7 @@ export class CountingQuizPool {
         const chunk = getDataChunk("counting");
         for(let i = 0; i < chunk.length; i++){
             const quiz = chunk[i];
-            this.data[i + start] = new CountingQuiz(quiz.question, quiz.answer);
+            this.data[i + start] = new CountingQuiz(quiz.question, quiz.choices[quiz.answer]);
         }
     }
 

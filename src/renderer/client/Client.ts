@@ -12,6 +12,7 @@ import {Pair} from "../utils/Pair";
 import {Vector} from "../utils/Vector";
 import {MultiChoiceQuiz} from "../quiz/MultiChoiceQuiz";
 import {Connection} from "./Connection";
+import {CountingQuiz} from "../quiz/CountingQuiz";
 
 // Phương trình tính delta tốc độ từ thời gian trả lời trung bình
 const speedDeltaFunction = new LinearFunction(
@@ -93,7 +94,12 @@ export class Client {
                 minPenalty: 30,
                 maxPenalty: 40,
                 getQuiz: function(this: Client) : any {
-                    return this.countingQuizPool.nextQuiz();
+                    let quiz: CountingQuiz | undefined;
+                    while (true) {
+                        quiz = this.countingQuizPool.nextQuiz();
+                        if(quiz == undefined || !isNaN(parseFloat(quiz.answer.trim().replace(",",".")))) break;
+                    }
+                    return quiz;
                 },
                 renderQuiz: function (this: Client, quiz: any) {
                     this.gameRenderer.openCountingQuiz(quiz);
@@ -134,7 +140,7 @@ export class Client {
         renderEvents.onSubmitCount = function (this: Client, answer: string) {
             if(this.processingAnswer) return;
             this.processingAnswer = true;
-            this.onAnswered(this.activeQuiz?.quiz.answer == parseFloat(answer.trim()) ? 0 : 1, this.activeQuiz?.startTime);
+            this.onAnswered(this.activeQuiz?.quiz.answer.replace(",",".") == answer.trim().replace(",",".") ? 0 : 1, this.activeQuiz?.startTime);
         }.bind(this);
         renderEvents.onPickCard = function (this: Client, containerId: number, card: number) {
             if(this.processingAnswer) return;
@@ -376,8 +382,26 @@ export class Client {
                     if(this.processingNewQuiz) return;
                     this.processingNewQuiz = true;
                     setTimeout(function (this: Client) {
-                        //const type = Utils.randomRange(0, this.quizTypes.length - 1);
-                        const type = 9+9+9+9+9+9+9+9+9+9+9 == 0 ? 2 : 3;
+                        const rand = Utils.randomRange(0, 7);
+                        let type = 0;
+                        switch (rand) {
+                            case 0: case 1: case 2: case 3: {
+                                type = 0;
+                                break;
+                            }
+                            case 4: case 5: {
+                                type = 1;
+                                break;
+                            }
+                            case 6: {
+                                type = 2;
+                                break;
+                            }
+                            case 7: {
+                                type = 3;
+                                break;
+                            }
+                        }
                         const quizType = this.quizTypes[type];
                         this.activeQuiz = new ActiveQuiz(
                             quizType.getQuiz.call(this),

@@ -1,13 +1,13 @@
 export class CountingQuiz {
     private readonly _question: string;
-    private readonly _answer: number;
+    private readonly _answer: string;
 
-    constructor(question: string, answer: number) {
+    constructor(question: string, answer: string) {
         this._question = question;
         this._answer = answer;
     }
 
-    get answer(): number {
+    get answer(): string {
         return this._answer;
     }
 
