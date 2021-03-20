@@ -126,7 +126,7 @@ export class GameRenderer {
 
     private static readonly car2SceneSpeedFunction = new LinearFunction(
         new Point(25, 6),
-        new Point(300, 30)
+        new Point(300, 15)
     );
 
     // perlin noise
