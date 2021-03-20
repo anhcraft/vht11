@@ -24,7 +24,7 @@ function createWindow() {
     setTimeout(function (){
         mainWindow.setResizable(false);
         mainWindow.loadURL(url.format({
-            pathname: path.join(__basedir, __dirname, "../renderer/dist/index.html"),
+            pathname: path.join(__basedir, "./resources/app/src/renderer/dist/index.html"),
             protocol: "file:",
             slashes: true,
         })).then(r => {});

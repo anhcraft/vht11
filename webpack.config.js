@@ -65,7 +65,7 @@ module.exports = [
         },
     }),
     Object.assign({}, commonConfig, {
-        target: 'web',
+        target: 'electron-renderer',
         entry: {
             ui: './src/renderer/Main.ts',
         },
