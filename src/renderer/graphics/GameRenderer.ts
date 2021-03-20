@@ -27,13 +27,13 @@ import RoadImg from "../assets/road.png";
 // @ts-ignore
 import CatImg from "../assets/cat.png";
 // @ts-ignore
-import BirdImg from "../assets/bird.png";
+import WarningSignImg from "../assets/warning_sign.png";
 // @ts-ignore
-import ChickenImg from "../assets/chicken.png";
+import DuckImg from "../assets/duckies.png";
 // @ts-ignore
-import HoleImg from "../assets/holes.png";
+import HoleImg from "../assets/hole.png";
 // @ts-ignore
-import StoneImg from "../assets/stone.png";
+import RockImg from "../assets/rock.png";
 
 class GraphScale {
     get step(): number {
@@ -78,7 +78,33 @@ export class GameRenderer {
     private static readonly roadScaleY : number = 2;
 
     // Danh sách ảnh các vật cản
-    private static readonly obstacleImages: string[] = [CatImg, BirdImg, ChickenImg, HoleImg, StoneImg];
+    private static readonly obstacleImages: any[] = [
+        {
+            data: CatImg,
+            width: 374,
+            height: 165
+        },
+        {
+            data: WarningSignImg,
+            width: 402,
+            height: 258
+        },
+        {
+            data: HoleImg,
+            width: 612,
+            height: 201
+        },
+        {
+            data: RockImg,
+            width: 590,
+            height: 423
+        },
+        {
+            data: DuckImg,
+            width: 1120,
+            height: 471
+        }
+    ];
 
     private static readonly greenswardScale : number = 0.2;
 
@@ -447,7 +473,7 @@ export class GameRenderer {
         this.speed.anchor.set(1, 0);
         this.speed.position.set(this.travelledDistance.position.x, 55 * this.viewportScaleY);
 
-      //  this.app.stage.addChild(this.background);
+        this.app.stage.addChild(this.background);
         this.app.stage.addChild(container);
         this.app.stage.addChild(focus);
         this.app.stage.addChild(topBar);
@@ -513,11 +539,10 @@ export class GameRenderer {
                 let osc = this.obstacles[i];
                 if (osc === undefined) {
                     if (Math.random() <= 0.1) {
-                        osc = new PIXI.projection.Sprite2d(PIXI.Texture.from(
-                            GameRenderer.obstacleImages[~~(Math.random() * GameRenderer.obstacleImages.length)]
-                        ));
-                        osc.width = 100 * this.viewportScaleX;
-                        osc.height = 100 * this.viewportScaleY;
+                        const imgInfo = GameRenderer.obstacleImages[~~(Math.random() * GameRenderer.obstacleImages.length)];
+                        osc = new PIXI.projection.Sprite2d(PIXI.Texture.from(imgInfo.data));
+                        osc.width = 150 * this.viewportScaleX;
+                        osc.height = (150 * imgInfo.height / imgInfo.width) * this.viewportScaleY;
                         osc.anchor.set(0.5, 0.5);
                         this.resetObstaclePosition(osc, i % 3);
                         squarePlane.addChild(osc);
