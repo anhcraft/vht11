@@ -4,16 +4,24 @@ import {Direction} from "../utils/Direction";
 import {Utils} from "../utils/Utils";
 
 export class MatchingQuiz {
-    private static getDistance(a: Point, b: Point){
-        return (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+    private static checkDistance(a: Point, b: Point, squaredDistance: number){
+        const dx = Math.pow(a.x - b.x, 2);
+        const dy = Math.pow(a.y - b.y, 2);
+        return dx <= squaredDistance || dy <= squaredDistance;
     }
 
     public static createRandom() : MatchingQuiz {
-        const collisionDistance = Math.pow(3, 2); // binh phuong khoang cach
+        const squaredCollisionDistance = Math.pow(3, 2); // binh phuong khoang cach
         const dir = new Direction(
             Utils.randomRange(-20, 20),
             Utils.randomRange(-20, 20),
         );
+        if(dir.x * dir.x <= squaredCollisionDistance){
+            dir.x = Math.sqrt(squaredCollisionDistance);
+        }
+        if(dir.y * dir.y <= squaredCollisionDistance){
+            dir.y = Math.sqrt(squaredCollisionDistance);
+        }
         const answerBegins: Point[] = [];
         const answerCount = Utils.randomRange(2, 4);
         let i = 0;
@@ -22,7 +30,10 @@ export class MatchingQuiz {
                 Utils.randomRange(-50, 50),
                 Utils.randomRange(-50, 50),
             );
-            if(answerBegins.filter(p => this.getDistance(p, point) <= collisionDistance).length == 0) {
+            if(answerBegins.filter(p => {
+                return (this.checkDistance(p, point, squaredCollisionDistance))
+                    || (this.checkDistance(new Point(p.x + dir.x, p.y + dir.y), point, squaredCollisionDistance))
+            }).length == 0) {
                 answerBegins.push(point);
             }
             if(++i >= answerCount * 2) break;
@@ -36,10 +47,10 @@ export class MatchingQuiz {
                 Utils.randomRange(-70, 70),
                 Utils.randomRange(-70, 70),
             );
-            if(dummies.filter(p => this.getDistance(p, point) <= collisionDistance).length == 0
+            if(dummies.filter(p => this.checkDistance(p, point, squaredCollisionDistance)).length == 0
                 && answerBegins.filter(p => {
-                    return (this.getDistance(p, point) <= collisionDistance)
-                        || (this.getDistance(new Point(p.x + dir.x, p.y + dir.y), point) <= collisionDistance)
+                    return (this.checkDistance(p, point, squaredCollisionDistance))
+                        || (this.checkDistance(new Point(p.x + dir.x, p.y + dir.y), point, squaredCollisionDistance))
                 }).length == 0) {
                 dummies.push(point);
             }
