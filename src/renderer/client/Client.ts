@@ -221,7 +221,7 @@ export class Client {
                     e.preventDefault();
                     this.gameRenderer.carSide = Math.min(2, this.gameRenderer.carSide + 1);
                 }
-            }
+            }/*
             if (e.key == "z") {
                 const str = prompt("Nhập độ bền xe (0-100): ", this.carDurability+"");
                 if(str != null) {
@@ -258,7 +258,7 @@ export class Client {
                 }
             } else if (e.key == "c") {
                 this.gameRenderer.noCollision = !this.gameRenderer.noCollision;
-            }
+            }*/
         }.bind(this);
     }
 
