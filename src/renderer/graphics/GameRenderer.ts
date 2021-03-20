@@ -238,7 +238,7 @@ export class GameRenderer {
         document.body.appendChild(this._app.view);
         this._app.view.style.position = "absolute";
         this._app.view.style.zIndex = "999";
-        this._app.view.style.top = ((window.innerHeight - this._app.view.height) * 0.5)+"px";
+        this._app.view.style.top = Math.max(0, (window.innerHeight - this._app.view.height) * 0.5)+"px";
         this._app.view.style.left = "0px";
     }
 
@@ -458,16 +458,16 @@ export class GameRenderer {
 
         this.travelledDistance = new PIXI.Text("", new PIXI.TextStyle({
             fill: "white",
-            fontSize: 40,
+            fontSize: 40 * this.viewportScaleX,
             fontStyle: "italic"
         }));
         this.travelledDistance.zIndex = 10;
         this.travelledDistance.anchor.set(1, 0);
-        this.travelledDistance.position.set(this.screenWidth - 20 * this.viewportScaleX, 10 * this.viewportScaleY);
+        this.travelledDistance.position.set(this.screenWidth - 20, 10 * this.viewportScaleY);
 
         this.speed = new PIXI.Text("", new PIXI.TextStyle({
             fill: "white",
-            fontSize: 16
+            fontSize: 16 * this.viewportScaleX
         }));
         this.speed.zIndex = 10;
         this.speed.anchor.set(1, 0);
@@ -599,7 +599,7 @@ export class GameRenderer {
         for(const line of lines){
             const style = new PIXI.TextStyle({
                 fill: "white",
-                fontSize: 15
+                fontSize: 15 * this.viewportScaleX
             });
             const text = new PIXI.Text(line, style);
             text.position.set(x, y += 15);
@@ -688,7 +688,8 @@ export class GameRenderer {
         );
 
         const style = new PIXI.TextStyle({
-            fill: "white"
+            fill: "white",
+            fontSize: 20 * this.viewportScaleX
         });
         this.quizPenalty = new PIXI.Text("", style);
         this.quizPenalty.zIndex = 10;
@@ -739,7 +740,7 @@ export class GameRenderer {
                 ],
                 fillGradientType: 1,
                 fontFamily: "Comic Sans MS",
-                fontSize: 50,
+                fontSize: 50 * this.viewportScaleX,
                 fontWeight: "bold",
                 letterSpacing: 2,
                 stroke: "#2b6856",
@@ -756,7 +757,7 @@ export class GameRenderer {
                 ],
                 fillGradientType: 1,
                 fontFamily: "Comic Sans MS",
-                fontSize: 50,
+                fontSize: 50 * this.viewportScaleX,
                 fontWeight: "bold",
                 letterSpacing: 2,
                 stroke: "#730009",
@@ -800,7 +801,7 @@ export class GameRenderer {
             fill: ["#b61f1f"],
             fillGradientType: 1,
             fontFamily: "Comic Sans MS",
-            fontSize: 80,
+            fontSize: 80 * this.viewportScaleX,
             fontWeight: "bold",
             letterSpacing: 2,
             stroke: "#730009",
@@ -838,7 +839,7 @@ export class GameRenderer {
 
             const postQuestionRender = function (this: GameRenderer, question: PIXI.Sprite) {
                 const style = new PIXI.TextStyle({
-                    fontSize: 18,
+                    fontSize: 18 * this.viewportScaleX,
                     fontWeight: "bold"
                 });
                 const text0 = new PIXI.Text("Hãy chọn đáp án đúng nhất:", style);
@@ -906,7 +907,7 @@ export class GameRenderer {
                 // pre-render choices
                 const renderChoices = function (this: GameRenderer, i: number) {
                     const choice = quiz.choices[i];
-                    HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(choice), centerAlignedX - leftAlignedX, function (this: GameRenderer, txt: PIXI.Texture) {
+                    HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(choice), 16 * this.viewportScaleX, centerAlignedX - leftAlignedX, function (this: GameRenderer, txt: PIXI.Texture) {
                         const sprite = new PIXI.Sprite(txt);
                         sprite.anchor.set(0, 0);
                         sprite.interactive = true;
@@ -931,7 +932,7 @@ export class GameRenderer {
             }.bind(this);
 
             // render question
-            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), this.screenWidth * GameRenderer.quizContainerWidth - leftAlignedX * 2, function (this: GameRenderer, txt: PIXI.Texture) {
+            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), 16 * this.viewportScaleX, this.screenWidth * GameRenderer.quizContainerWidth - leftAlignedX * 2, function (this: GameRenderer, txt: PIXI.Texture) {
                 const question = new PIXI.Sprite(txt);
                 question.anchor.set(0, 0);
                 question.position.set(leftAlignedX, topPadding);
@@ -965,7 +966,7 @@ export class GameRenderer {
 
             const postQuestionRender = function (this: GameRenderer, question: PIXI.Sprite) {
                 const text0 = new PIXI.Text("Vui lòng nhập kết quả của bài toán trên:", new PIXI.TextStyle({
-                    fontSize: 18,
+                    fontSize: 18 * this.viewportScaleX,
                     fontWeight: "bold"
                 }));
                 text0.anchor.set(0, 0.5);
@@ -974,9 +975,9 @@ export class GameRenderer {
 
                 const input = new TextInput({
                     input: {
-                        fontSize: '18px',
-                        padding: '10px',
-                        width: '300px',
+                        fontSize: 18 * this.viewportScaleX + 'px',
+                        padding: 10 * this.viewportScaleX + 'px',
+                        width: 300 * this.viewportScaleX + 'px',
                         color: '#26272E'
                     },
                     box: {
@@ -1002,7 +1003,7 @@ export class GameRenderer {
                 this.quizContainer?.addChild(btn);
 
                 const text1 = new PIXI.Text("NỘP BÀI", new PIXI.TextStyle({
-                    fontSize: 16,
+                    fontSize: 16 * this.viewportScaleX,
                     fontWeight: "600",
                     fill: ["#ffffff"]
                 }));
@@ -1015,7 +1016,7 @@ export class GameRenderer {
             }.bind(this);
 
             // render question
-            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), this.screenWidth * GameRenderer.quizContainerWidth - leftAlignedX * 2, function (this: GameRenderer, txt: PIXI.Texture) {
+            HTMLRenderer.createTexture(MathMLRenderer.mml2canvas(quiz.question), 16 * this.viewportScaleX, this.screenWidth * GameRenderer.quizContainerWidth - leftAlignedX * 2, function (this: GameRenderer, txt: PIXI.Texture) {
                 const question = new PIXI.Sprite(txt);
                 question.anchor.set(0, 0);
                 question.position.set(leftAlignedX, topPadding);
@@ -1033,7 +1034,7 @@ export class GameRenderer {
 
     private renderCardContainer(cards: number[], maxCards: number, onCardFocused: any, posY: number) : Scrollbox {
         const textStyle = new PIXI.TextStyle({
-            fontSize: 25,
+            fontSize: 25 * this.viewportScaleX,
             fontWeight: "600",
             fill: ["#ffffff"]
         });
@@ -1150,7 +1151,7 @@ export class GameRenderer {
                 }
             }
             const text0 = new PIXI.Text(`Hãy sắp xếp các thẻ theo thứ tự để tạo thành một dãy ${s}:`, new PIXI.TextStyle({
-                fontSize: 18,
+                fontSize: 18 * this.viewportScaleX,
                 fontWeight: "bold"
             }));
             text0.anchor.set(0.5, 0.5);
@@ -1206,7 +1207,7 @@ export class GameRenderer {
         let toolTip: PIXI.Text;
         point.on('pointerover', function (this: GameRenderer) {
             toolTip = new PIXI.Text(`(${p.x},${p.y})`, new PIXI.TextStyle({
-                fontSize: 14
+                fontSize: 14 * this.viewportScaleX
             }));
             toolTip.position.set(
                 x + 15 * this.viewportScaleX,
@@ -1220,7 +1221,7 @@ export class GameRenderer {
         }.bind(this));
 
         const labelX = new PIXI.Text(`${p.x}`, new PIXI.TextStyle({
-            fontSize: 13
+            fontSize: 13 * this.viewportScaleX
         }));
         labelX.zIndex = 10;
         labelX.anchor.set(0.5, 0.5);
@@ -1228,7 +1229,7 @@ export class GameRenderer {
         this.quizGraph?.addChild(labelX);
 
         const labelY = new PIXI.Text(`${p.y}`, new PIXI.TextStyle({
-            fontSize: 13
+            fontSize: 13 * this.viewportScaleX
         }));
         labelY.zIndex = 9;
         labelY.anchor.set(0.5, 0.5);
@@ -1287,7 +1288,7 @@ export class GameRenderer {
             const arrowLen = r * 3;
 
             const text0 = new PIXI.Text(`Hãy tìm các cặp A(x, y) và B(x, y) sao cho T(v, A) = B với v = (${quiz.direction.x}, ${quiz.direction.y})`, new PIXI.TextStyle({
-                fontSize: 18,
+                fontSize: 18 * this.viewportScaleX,
                 fontWeight: "bold"
             }));
             text0.position.set(leftAlignedX, topPadding);

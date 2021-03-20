@@ -4,11 +4,11 @@ import html2canvas from "html2canvas";
 global.PIXI = PIXI;
 
 export class HTMLRenderer {
-    private static createDummyCanvas(code: string, maxWidth: number, callback: any) {
+    private static createDummyCanvas(code: string, fontSize: number, maxWidth: number, callback: any) {
         const dummy = document.createElement("div");
         dummy.style.width = maxWidth + "px";
         dummy.style.fontFamily = "Arial";
-        dummy.style.fontSize = "16px";
+        dummy.style.fontSize = fontSize+"px";
         dummy.innerHTML = code;
         let container = document.getElementById("dummy-canvas-container");
         if(container == null) {
@@ -30,8 +30,8 @@ export class HTMLRenderer {
       //  }, 500)
     }
 
-    public static createTexture(code: string, maxWidth: number, callback: any){
-        this.createDummyCanvas(code, maxWidth, function (this : HTMLRenderer, canvas : HTMLCanvasElement) {
+    public static createTexture(code: string, fontSize: number, maxWidth: number, callback: any){
+        this.createDummyCanvas(code, fontSize, maxWidth, function (this : HTMLRenderer, canvas : HTMLCanvasElement) {
             callback.call(undefined, PIXI.Texture.from(canvas.toDataURL()))
         });
     }
