@@ -808,7 +808,7 @@ export class GameRenderer {
             strokeThickness: 5,
             align: "center"
         });
-        const text = new PIXI.Text('BẠN ĐÃ THUA CUỘC!\nNON VL :))', style);
+        const text = new PIXI.Text('BẠN ĐÃ THUA CUỘC!', style);
         text.zIndex = 9999;
         text.anchor.set(0.5, 0.5);
         text.position.set(
